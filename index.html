@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="内容工作流">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>芮柚子 · 内容工作流</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0d0d0d; color: #e0e0e0;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+}
+
+/* ===== Header ===== */
+.header {
+  background: #111; border-bottom: 1px solid #222;
+  padding: 14px 24px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 100;
+}
+.header h1 { font-size: 17px; font-weight: 600; color: #eee; }
+.header h1 small { color: #555; font-weight: 400; font-size: 12px; margin-left: 8px; }
+.hdr-r { display: flex; gap: 6px; align-items: center; }
+
+.btn {
+  padding: 6px 14px; border: none; border-radius: 5px; cursor: pointer;
+  font-size: 12px; font-weight: 500;
+}
+.btn.primary { background: #3b82f6; color: #fff; }
+.btn.primary:hover { background: #2563eb; }
+.btn.sec { background: #222; color: #aaa; border: 1px solid #333; }
+.btn.sec:hover { background: #2a2a2a; color: #ddd; }
+.btn.sm { padding: 4px 10px; font-size: 11px; }
+
+/* ===== Filter ===== */
+.flt {
+  padding: 8px 24px; background: #101010; border-bottom: 1px solid #1a1a1a;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.flt .cnt { color: #444; font-size: 12px; margin-left: auto; }
+.flt-tag {
+  padding: 3px 12px; border-radius: 20px; font-size: 11px; cursor: pointer;
+  border: 1px solid #2a2a2a; color: #666; background: transparent;
+}
+.flt-tag:hover { border-color: #444; color: #999; }
+.flt-tag.on { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,.08); }
+
+/* ===== Table ===== */
+.wrap { padding: 0 18px 40px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+thead th {
+  padding: 10px 6px; font-size: 11px; font-weight: 600; color: #aaa;
+  border-bottom: 2px solid #2a2a2a; text-align: left;
+  letter-spacing: 0.3px; user-select: none;
+}
+tbody tr { border-bottom: 1px solid #181818; }
+tbody tr:hover { background: #141414; }
+tbody td { padding: 10px 6px; vertical-align: middle; }
+
+/* Column widths */
+.c0 { width: 45%; }
+.c1 { width: 4%; }
+.cp { width: 8%; }
+.cx { width: 3%; }
+
+/* Title */
+.tit { word-break: break-all; width: 100%; padding-right: 8px; cursor: pointer; }
+.tit:hover { opacity: .8; }
+.tit .nm { color: #e0e0e0; font-weight: 500; font-size: 12px; line-height: 1.4; }
+.tit .dt { color: #3a3a3a; font-size: 10px; margin-top: 1px; }
+.tit .nt { color: #4a4a4a; font-size: 11px; margin-top: 2px; max-height: 30px; overflow: hidden; }
+
+/* Copy toggle */
+.cp-tog {
+  cursor: pointer; font-size: 16px; user-select: none; display: inline-block; padding: 4px 4px 4px 0;
+}
+.cp-tog.done { color: #22c55e; }
+.cp-tog.no { color: #333; }
+.cp-tog:hover { opacity: .7; }
+
+/* Platform row */
+.prow { display: flex; align-items: center; gap: 3px; }
+.pdot {
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid #333;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; transition: all .12s; flex-shrink: 0;
+}
+.pdot.ok { background: #22c55e; border-color: #22c55e; }
+.pdot.ok::after { content: "✓"; color: #111; font-weight: 700; font-size: 12px; }
+.pdot:hover { border-color: #777; }
+
+.btag {
+  font-size: 11px; color: #3b82f6; cursor: pointer; padding: 2px 6px;
+  border: 1px solid #3b82f633; border-radius: 4px; user-select: none;
+}
+.btag:hover { background: rgba(59,130,246,.1); }
+.btag.on { background: rgba(59,130,246,.12); }
+
+.sbtn {
+  font-size: 12px; color: #555; cursor: pointer; padding: 2px 5px;
+  border-radius: 3px; line-height: 1;
+}
+.sbtn:hover { color: #3b82f6; background: rgba(59,130,246,.08); }
+.sbtn.ok { color: #22c55e; }
+
+.del { visibility: hidden; background: none; border: none; color: #333; cursor: pointer; font-size: 13px; padding: 2px; }
+tr:hover .del { visibility: visible; }
+.del:hover { color: #f87171; }
+
+/* ===== Stats Popup ===== */
+.mask {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.5); align-items: center; justify-content: center;
+}
+.mask.on { display: flex; }
+.pop {
+  background: #181818; border: 1px solid #2a2a2a; border-radius: 10px;
+  padding: 20px 24px; width: 340px; max-width: 90vw;
+}
+.pop h3 { font-size: 14px; font-weight: 500; color: #ccc; margin-bottom: 14px; }
+.pop h3 .x { float: right; background: none; border: none; color: #555; cursor: pointer; font-size: 15px; }
+.pop h3 .x:hover { color: #fff; }
+.srow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 0; border-bottom: 1px solid #222;
+}
+.srow:last-child { border-bottom: none; }
+.srow label { font-size: 12px; color: #999; }
+.srow input {
+  width: 90px; padding: 4px 8px; background: #111; border: 1px solid #2a2a2a;
+  border-radius: 4px; color: #e0e0e0; font-size: 13px; text-align: right;
+}
+.srow input:focus { outline: none; border-color: #3b82f6; }
+.pop .pf { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #222; }
+
+/* ===== Modal ===== */
+.mdl {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.55); align-items: center; justify-content: center;
+}
+.mdl.on { display: flex; }
+.mdl-in {
+  background: #181818; border: 1px solid #2a2a2a; border-radius: 10px;
+  padding: 22px 26px; width: 440px; max-width: 90vw;
+}
+.mdl-in h2 { font-size: 16px; font-weight: 600; color: #eee; margin-bottom: 14px; }
+.fg { margin-bottom: 12px; }
+.fg label { display: block; font-size: 12px; color: #777; margin-bottom: 3px; }
+.fg input, .fg textarea {
+  width: 100%; padding: 8px 10px; background: #1e1e1e; border: 1px solid #333;
+  border-radius: 5px; color: #e0e0e0; font-size: 13px; font-family: inherit;
+}
+.fg input:focus, .fg textarea:focus { outline: none; border-color: #3b82f6; }
+.fg textarea { min-height: 60px; resize: vertical; }
+.mdl-in .ma { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+.empty {
+  text-align: center; padding: 80px 20px; color: #333;
+}
+.empty .ic { font-size: 38px; margin-bottom: 10px; opacity: .2; }
+.empty p { font-size: 14px; }
+.empty .sub { font-size: 12px; margin-top: 4px; }
+.empty.hide { display: none; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .header { padding: 10px 12px; }
+  .header h1 { font-size: 15px; }
+  .header h1 small { display: none; }
+  .flt { padding: 6px 12px; gap: 5px; }
+  .flt-tag { font-size: 10px; padding: 2px 8px; }
+  .wrap { padding: 0 8px 20px; }
+  thead th { font-size: 10px; padding: 8px 4px; }
+  tbody td { padding: 8px 4px; }
+  .pdot { width: 20px; height: 20px; font-size: 10px; }
+  .btag { font-size: 10px; padding: 1px 4px; }
+  .sbtn { font-size: 11px; padding: 2px 4px; }
+  .pop { width: 300px; padding: 16px; }
+  .mdl-in { width: 90vw; padding: 18px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>内容工作流 <small>芮柚子Faye</small></h1>
+  <div class="hdr-r">
+    <button class="btn sec sm" onclick="exp()">导出</button>
+    <button class="btn sec sm" onclick="imp()">导入</button>
+    <input type="file" id="impF" accept=".json" style="display:none" onchange="doImp(event)">
+    <button class="btn primary" onclick="newModal()">+ 新建</button>
+  </div>
+</div>
+
+<div class="flt">
+  <button class="flt-tag on" data-f="all" onclick="setF('all',this)">全部</button>
+  <button class="flt-tag" data-f="cp" onclick="setF('cp',this)">待写文案</button>
+  <button class="flt-tag" data-f="cd" onclick="setF('cd',this)">文案完成</button>
+  <button class="flt-tag" data-f="up" onclick="setF('up',this)">有平台待发</button>
+  <button class="flt-tag" data-f="ap" onclick="setF('ap',this)">全部已发</button>
+  <span class="cnt" id="cnt"></span>
+</div>
+
+<div class="wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="c0">灵感</th>
+        <th class="c1">文案</th>
+        <th class="cp">抖音</th>
+        <th class="cp">公众号</th>
+        <th class="cp">播客</th>
+        <th class="cp">B站</th>
+        <th class="cp">YouTube</th>
+        <th class="cx"></th>
+      </tr>
+    </thead>
+    <tbody id="tb"></tbody>
+  </table>
+  <div class="empty" id="emp">
+    <div class="ic">📝</div>
+    <p>还没有灵感</p>
+    <div class="sub">点右上角「新建」开始</div>
+  </div>
+</div>
+
+<!-- Stats Popup -->
+<div class="mask" id="statsMask">
+  <div class="pop">
+    <h3><span id="popTitle">流量数据</span><button class="x" onclick="closePop()">✕</button></h3>
+    <div id="popBody"></div>
+    <div class="pf">
+      <button class="btn sec sm" onclick="resetPop()">重置</button>
+      <button class="btn primary sm" onclick="closePop()">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="mdl" id="editMdl">
+  <div class="mdl-in">
+    <h2 id="mdlTitle">新建灵感</h2>
+    <div class="fg">
+      <label>标题</label>
+      <input type="text" id="iptTitle" placeholder="给灵感起个名字">
+    </div>
+    <div class="fg">
+      <label>备注</label>
+      <textarea id="iptNote" placeholder="思路、链接、参考…"></textarea>
+    </div>
+    <div class="ma">
+      <button class="btn sec" onclick="closeMdl()">取消</button>
+      <button class="btn primary" onclick="saveMdl()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var D = []; // ideas array
+var flt = 'all';
+var eid = null; // editing id
+var pctx = null; // popup context {id, plat}
+
+const P = [
+  {k:'抖音', s:['播放量','点赞','评论','分享','收藏']},
+  {k:'公众号', s:['阅读量','点赞','在看']},
+  {k:'播客', s:['播放量','订阅','评论']},
+  {k:'B站', s:['播放量','点赞','评论','投币','收藏']},
+  {k:'YouTube', s:['观看量','点赞','评论']}
+];
+
+function init() {
+  // try new key first, then old key
+  try {
+    var x = localStorage.getItem('ryz_cwf2') || localStorage.getItem('ryz_cwf');
+    if (x) D = JSON.parse(x);
+  } catch(e) { D = []; }
+  // ensure all ideas have correct structure
+  var changed = false;
+  D.forEach(function(d) {
+    if (!d.platforms) { d.platforms = {}; changed = true; }
+    P.forEach(function(p) {
+      if (!d.platforms[p.k]) { d.platforms[p.k] = {}; changed = true; }
+      var pl = d.platforms[p.k];
+      if (pl.published === undefined) { pl.published = false; changed = true; }
+      if (pl.boosted === undefined) { pl.boosted = false; changed = true; }
+      if (!pl.stats) { pl.stats = {}; changed = true; }
+      p.s.forEach(function(s) {
+        if (pl.stats[s] === undefined) { pl.stats[s] = 0; changed = true; }
+      });
+    });
+  });
+  if (changed) sv();
+  r();
+}
+
+function sv() {
+  try { localStorage.setItem('ryz_cwf2', JSON.stringify(D)); } catch(e) {}
+}
+
+function r() {
+  var arr = getF();
+  var tb = document.getElementById('tb');
+  var emp = document.getElementById('emp');
+  document.getElementById('cnt').textContent = D.length + ' 个';
+
+  if (!arr.length) { tb.innerHTML = ''; emp.classList.remove('hide'); return; }
+  emp.classList.add('hide');
+
+  tb.innerHTML = arr.map(function(d) {
+    var title = esc(d.title) || '无标题';
+    var note = esc(d.content) || '';
+    return '<tr>' +
+      '<td><div class="tit" onclick="editIdea(\'' + d.id + '\')"><div class="nm">' + title + '</div><div class="dt">' + (d.createdAt||'') + '</div>' + (note ? '<div class="nt">' + note + '</div>' : '') + '</div></td>' +
+      '<td><span class="cp-tog ' + (d.copyDone?'done':'no') + '" onclick="togC(\'' + d.id + '\')">' + (d.copyDone?'✓':'○') + '</span></td>' +
+      P.map(function(p) { return rp(d, p.k); }).join('') +
+      '<td><button class="del" onclick="delI(\'' + d.id + '\')">✕</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function rp(idea, pk) {
+  var pd = idea.platforms[pk] || {};
+  var has = pd.stats && P.some(function(p){return p.k===pk;}) && Object.values(pd.stats).some(function(v){return v>0;});
+  return '<td><div class="prow">' +
+    '<div class="pdot ' + (pd.published?'ok':'') + '" onclick="togP(\'' + idea.id + '\',\'' + pk + '\')"></div>' +
+    '<span class="btag ' + (pd.boosted?'on':'') + '" onclick="togB(\'' + idea.id + '\',\'' + pk + '\')">' + (pd.boosted?'推流':'未推') + '</span>' +
+    '<span class="sbtn ' + (has?'ok':'') + '" onclick="openPop(\'' + idea.id + '\',\'' + pk + '\')">' + (has?'✓':'📊') + '</span>' +
+    '</div></td>';
+}
+
+/* ===== Actions ===== */
+function togC(id) {
+  var d = D.find(function(x){return x.id===id;});
+  if (d) { d.copyDone = !d.copyDone; sv(); r(); }
+}
+
+function togP(id, pk) {
+  var d = D.find(function(x){return x.id===id;});
+  if (d) {
+    if (!d.platforms[pk]) d.platforms[pk] = {published:false,boosted:false,stats:{}};
+    d.platforms[pk].published = !d.platforms[pk].published;
+    sv(); r();
+  }
+}
+
+function togB(id, pk) {
+  var d = D.find(function(x){return x.id===id;});
+  if (d) {
+    if (!d.platforms[pk]) d.platforms[pk] = {published:false,boosted:false,stats:{}};
+    d.platforms[pk].boosted = !d.platforms[pk].boosted;
+    sv(); r();
+  }
+}
+
+/* ===== Stats Popup ===== */
+function openPop(id, pk) {
+  pctx = {id:id, plat:pk};
+  var pf = P.find(function(p){return p.k===pk;});
+  if (!pf) return;
+  var d = D.find(function(x){return x.id===id;});
+  if (!d) return;
+  if (!d.platforms[pk]) d.platforms[pk] = {published:false,boosted:false,stats:{}};
+  if (!d.platforms[pk].stats) d.platforms[pk].stats = {};
+  var st = d.platforms[pk].stats;
+
+  document.getElementById('popTitle').textContent = pk + ' · 流量';
+  document.getElementById('popBody').innerHTML = pf.s.map(function(s) {
+    return '<div class="srow"><label>' + s + '</label><input type="number" min="0" id="sp_' + s + '" value="' + (st[s]||0) + '"></div>';
+  }).join('');
+  document.getElementById('statsMask').classList.add('on');
+}
+
+function closePop() {
+  if (pctx) {
+    var d = D.find(function(x){return x.id===pctx.id;});
+    if (d) {
+      var pf = P.find(function(p){return p.k===pctx.plat;});
+      if (pf) {
+        if (!d.platforms[pctx.plat]) d.platforms[pctx.plat] = {};
+        if (!d.platforms[pctx.plat].stats) d.platforms[pctx.plat].stats = {};
+        pf.s.forEach(function(s) {
+          var el = document.getElementById('sp_' + s);
+          if (el) d.platforms[pctx.plat].stats[s] = parseInt(el.value) || 0;
+        });
+        sv(); r();
+      }
+    }
+  }
+  document.getElementById('statsMask').classList.remove('on');
+  pctx = null;
+}
+
+function resetPop() {
+  if (!pctx) return;
+  var pf = P.find(function(p){return p.k===pctx.plat;});
+  if (!pf) return;
+  pf.s.forEach(function(s) {
+    var el = document.getElementById('sp_' + s);
+    if (el) el.value = 0;
+  });
+}
+
+/* ===== Filter ===== */
+function setF(f, el) {
+  flt = f;
+  document.querySelectorAll('.flt-tag').forEach(function(t){t.classList.remove('on');});
+  if (el) el.classList.add('on');
+  r();
+}
+
+function getF() {
+  var a = D.slice();
+  if (flt === 'cp') a = a.filter(function(d){return !d.copyDone;});
+  else if (flt === 'cd') a = a.filter(function(d){return d.copyDone;});
+  else if (flt === 'up') a = a.filter(function(d){return Object.keys(d.platforms).some(function(k){return !d.platforms[k].published;});});
+  else if (flt === 'ap') a = a.filter(function(d){return Object.keys(d.platforms).length > 0 && Object.keys(d.platforms).every(function(k){return d.platforms[k].published;});});
+  a.sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');});
+  return a;
+}
+
+/* ===== Modal ===== */
+function newModal() {
+  eid = null;
+  document.getElementById('mdlTitle').textContent = '新建灵感';
+  document.getElementById('iptTitle').value = '';
+  document.getElementById('iptNote').value = '';
+  document.getElementById('editMdl').classList.add('on');
+  setTimeout(function(){document.getElementById('iptTitle').focus();}, 100);
+}
+
+function editIdea(id) {
+  var d = D.find(function(x){return x.id===id;});
+  if (!d) return;
+  eid = id;
+  document.getElementById('mdlTitle').textContent = '编辑灵感';
+  document.getElementById('iptTitle').value = d.title || '';
+  document.getElementById('iptNote').value = d.content || '';
+  document.getElementById('editMdl').classList.add('on');
+}
+
+function closeMdl() { document.getElementById('editMdl').classList.remove('on'); eid = null; }
+
+function saveMdl() {
+  var title = document.getElementById('iptTitle').value.trim();
+  if (!title) { alert('请输入标题'); return; }
+  var content = document.getElementById('iptNote').value.trim();
+  if (eid) {
+    var d = D.find(function(x){return x.id===eid;});
+    if (d) { d.title = title; d.content = content; }
+  } else {
+    var pl = {};
+    P.forEach(function(p){
+      var st = {}; p.s.forEach(function(s){st[s]=0;});
+      pl[p.k] = {published:false, boosted:false, stats:st};
+    });
+    D.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      title: title, content: content,
+      createdAt: new Date().toISOString().slice(0,10),
+      copyDone: false, platforms: pl
+    });
+  }
+  sv(); closeMdl(); r();
+}
+
+function delI(id) {
+  if (!confirm('删除这个灵感？')) return;
+  D = D.filter(function(x){return x.id!==id;});
+  sv(); r();
+}
+
+/* ===== Export/Import ===== */
+function exp() {
+  var b = new Blob([JSON.stringify(D,null,2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'cwf_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function imp() { document.getElementById('impF').click(); }
+
+function doImp(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var r2 = new FileReader();
+  r2.onload = function(ev) {
+    try {
+      var d = JSON.parse(ev.target.result);
+      if (Array.isArray(d)) { D = d; sv(); r(); alert('导入成功'); }
+      else alert('格式不对');
+    } catch(e2) { alert('导入失败'); }
+  };
+  r2.readAsText(file);
+  e.target.value = '';
+}
+
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ===== Keyboard ===== */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closePop(); closeMdl(); }
+});
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+
+init();
+</script>
+</body>
+</html>
