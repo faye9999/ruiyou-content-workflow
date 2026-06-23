@@ -585,10 +585,22 @@ document.getElementById('tb').addEventListener('drop', function(e) {
   sv(); r();
 });
 
-// Register service worker
+// Register service worker with aggressive update checks
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'}).then(function(reg) {
+      // Force update check immediately and every 30s
+      reg.update();
+      setInterval(function() { reg.update(); }, 30000);
+
+      // Auto-reload when new SW takes over
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    });
   });
 }
 
