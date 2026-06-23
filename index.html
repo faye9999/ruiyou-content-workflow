@@ -85,53 +85,18 @@ tbody td { padding: 10px 6px; vertical-align: middle; }
 .cp-tog.no { color: #333; }
 .cp-tog:hover { opacity: .7; }
 
-/* Platform row */
-.prow { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* Platform dot */
 .pdot {
   width: 22px; height: 22px; border-radius: 50%; border: 2px solid #333;
-  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; transition: all .12s; flex-shrink: 0;
+  cursor: pointer; display: inline-block; transition: all .12s;
 }
 .pdot.ok { background: #22c55e; border-color: #22c55e; }
-.pdot.ok::after { content: "✓"; color: #111; font-weight: 700; font-size: 12px; }
+.pdot.ok::after { content: "✓"; color: #111; font-weight: 700; font-size: 12px; line-height: 22px; text-align: center; display: block; }
 .pdot:hover { border-color: #777; }
-
-.sbtn {
-  font-size: 11px; color: #555; cursor: pointer; padding: 1px 4px;
-  border-radius: 3px; line-height: 1.2; text-align: center;
-}
-.sbtn:hover { color: #3b82f6; background: rgba(59,130,246,.08); }
-.sbtn.ok { color: #22c55e; }
 
 .del { visibility: hidden; background: none; border: none; color: #333; cursor: pointer; font-size: 13px; padding: 2px; }
 tr:hover .del { visibility: visible; }
 .del:hover { color: #f87171; }
-
-/* ===== Stats Popup ===== */
-.mask {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,.5); align-items: center; justify-content: center;
-}
-.mask.on { display: flex; }
-.pop {
-  background: #181818; border: 1px solid #2a2a2a; border-radius: 10px;
-  padding: 20px 24px; width: 340px; max-width: 90vw;
-}
-.pop h3 { font-size: 14px; font-weight: 500; color: #ccc; margin-bottom: 14px; }
-.pop h3 .x { float: right; background: none; border: none; color: #555; cursor: pointer; font-size: 15px; }
-.pop h3 .x:hover { color: #fff; }
-.srow {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 0; border-bottom: 1px solid #222;
-}
-.srow:last-child { border-bottom: none; }
-.srow label { font-size: 12px; color: #999; }
-.srow input {
-  width: 90px; padding: 4px 8px; background: #111; border: 1px solid #2a2a2a;
-  border-radius: 4px; color: #e0e0e0; font-size: 13px; text-align: right;
-}
-.srow input:focus { outline: none; border-color: #3b82f6; }
-.pop .pf { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #222; }
 
 /* ===== Modal ===== */
 .mdl {
@@ -195,13 +160,7 @@ tbody tr.dragging { opacity: 0.4; }
   /* Bigger touch targets */
   .cp-tog { font-size: 20px; padding: 8px 6px 8px 2px; }
   .pdot { width: 26px; height: 26px; font-size: 12px; }
-  .sbtn { font-size: 12px; padding: 4px 6px; min-height: 28px; display: inline-flex; align-items: center; }
   .del { visibility: visible; font-size: 16px; padding: 6px; }
-
-  /* Popup full-screen on mobile */
-  .pop { width: 94vw; max-width: 94vw; padding: 18px 16px; }
-  .srow { padding: 10px 0; }
-  .srow input { width: 110px; padding: 8px; font-size: 15px; min-height: 36px; }
 
   /* Modal adjustments */
   .mdl-in { width: 94vw; padding: 18px; }
@@ -253,18 +212,6 @@ tbody tr.dragging { opacity: 0.4; }
   </div>
 </div>
 
-<!-- Stats Popup -->
-<div class="mask" id="statsMask">
-  <div class="pop">
-    <h3><span id="popTitle">流量数据</span><button class="x" onclick="closePop()">✕</button></h3>
-    <div id="popBody"></div>
-    <div class="pf">
-      <button class="btn sec sm" onclick="resetPop()">重置</button>
-      <button class="btn primary sm" onclick="closePop()">完成</button>
-    </div>
-  </div>
-</div>
-
 <!-- Edit Modal -->
 <div class="mdl" id="editMdl">
   <div class="mdl-in">
@@ -288,35 +235,20 @@ tbody tr.dragging { opacity: 0.4; }
 var D = []; // ideas array
 var flt = 'all';
 var eid = null; // editing id
-var pctx = null; // popup context {id, plat}
 
-const P = [
-  {k:'抖音', s:['播放量','点赞','评论','分享','收藏']},
-  {k:'公众号', s:['阅读量','点赞','在看']},
-  {k:'播客', s:['播放量','订阅','评论']},
-  {k:'B站', s:['播放量','点赞','评论','投币','收藏']},
-  {k:'YouTube', s:['观看量','点赞','评论']}
-];
+const P = ['抖音','公众号','播客','B站','YouTube'];
 
 function init() {
-  // try new key first, then old key
   try {
     var x = localStorage.getItem('ryz_cwf2') || localStorage.getItem('ryz_cwf');
     if (x) D = JSON.parse(x);
   } catch(e) { D = []; }
-  // ensure all ideas have correct structure
+  // ensure all ideas have correct platform structure
   var changed = false;
   D.forEach(function(d) {
     if (!d.platforms) { d.platforms = {}; changed = true; }
-    P.forEach(function(p) {
-      if (!d.platforms[p.k]) { d.platforms[p.k] = {}; changed = true; }
-      var pl = d.platforms[p.k];
-      if (pl.published === undefined) { pl.published = false; changed = true; }
-      if (pl.boosted === undefined) { pl.boosted = false; changed = true; }
-      if (!pl.stats) { pl.stats = {}; changed = true; }
-      p.s.forEach(function(s) {
-        if (pl.stats[s] === undefined) { pl.stats[s] = 0; changed = true; }
-      });
+    P.forEach(function(pk) {
+      if (!d.platforms[pk]) { d.platforms[pk] = {published:false}; changed = true; }
     });
   });
   if (changed) sv();
@@ -342,7 +274,7 @@ function r() {
     return '<tr draggable="true" data-id="' + d.id + '">' +
       '<td><div class="tit" onclick="editIdea(\'' + d.id + '\')"><div class="nm">' + title + '</div><div class="dt">' + (d.createdAt||'') + '</div>' + (note ? '<div class="nt">' + note + '</div>' : '') + '</div></td>' +
       '<td><span class="cp-tog ' + (d.copyDone?'done':'no') + '" onclick="togC(\'' + d.id + '\')">' + (d.copyDone?'✓':'○') + '</span></td>' +
-      P.map(function(p) { return rp(d, p.k); }).join('') +
+      P.map(function(p) { return rp(d, p); }).join('') +
       '<td><button class="del" onclick="delI(\'' + d.id + '\')">✕</button></td>' +
       '</tr>';
   }).join('');
@@ -350,11 +282,9 @@ function r() {
 
 function rp(idea, pk) {
   var pd = idea.platforms[pk] || {};
-  var has = pd.stats && P.some(function(p){return p.k===pk;}) && Object.values(pd.stats).some(function(v){return v>0;});
-  return '<td><div class="prow">' +
-    '<div class="pdot ' + (pd.published?'ok':'') + '" onclick="togP(\'' + idea.id + '\',\'' + pk + '\')"></div>' +
-    '<span class="sbtn ' + (has?'ok':'') + '" onclick="openPop(\'' + idea.id + '\',\'' + pk + '\')">' + (has?'✓':'📊') + '</span>' +
-    '</div></td>';
+  return '<td style="text-align:center">' +
+    '<span class="pdot ' + (pd.published?'ok':'') + '" onclick="togP(\'' + idea.id + '\',\'' + pk + '\')"></span>' +
+    '</td>';
 }
 
 /* ===== Actions ===== */
@@ -366,67 +296,10 @@ function togC(id) {
 function togP(id, pk) {
   var d = D.find(function(x){return x.id===id;});
   if (d) {
-    if (!d.platforms[pk]) d.platforms[pk] = {published:false,boosted:false,stats:{}};
+    if (!d.platforms[pk]) d.platforms[pk] = {published:false};
     d.platforms[pk].published = !d.platforms[pk].published;
     sv(); r();
   }
-}
-
-function togB(id, pk) {
-  var d = D.find(function(x){return x.id===id;});
-  if (d) {
-    if (!d.platforms[pk]) d.platforms[pk] = {published:false,boosted:false,stats:{}};
-    d.platforms[pk].boosted = !d.platforms[pk].boosted;
-    sv(); r();
-  }
-}
-
-/* ===== Stats Popup ===== */
-function openPop(id, pk) {
-  pctx = {id:id, plat:pk};
-  var pf = P.find(function(p){return p.k===pk;});
-  if (!pf) return;
-  var d = D.find(function(x){return x.id===id;});
-  if (!d) return;
-  if (!d.platforms[pk]) d.platforms[pk] = {published:false,boosted:false,stats:{}};
-  if (!d.platforms[pk].stats) d.platforms[pk].stats = {};
-  var st = d.platforms[pk].stats;
-
-  document.getElementById('popTitle').textContent = pk + ' · 流量';
-  document.getElementById('popBody').innerHTML = pf.s.map(function(s) {
-    return '<div class="srow"><label>' + s + '</label><input type="number" min="0" id="sp_' + s + '" value="' + (st[s]||0) + '"></div>';
-  }).join('');
-  document.getElementById('statsMask').classList.add('on');
-}
-
-function closePop() {
-  if (pctx) {
-    var d = D.find(function(x){return x.id===pctx.id;});
-    if (d) {
-      var pf = P.find(function(p){return p.k===pctx.plat;});
-      if (pf) {
-        if (!d.platforms[pctx.plat]) d.platforms[pctx.plat] = {};
-        if (!d.platforms[pctx.plat].stats) d.platforms[pctx.plat].stats = {};
-        pf.s.forEach(function(s) {
-          var el = document.getElementById('sp_' + s);
-          if (el) d.platforms[pctx.plat].stats[s] = parseInt(el.value) || 0;
-        });
-        sv(); r();
-      }
-    }
-  }
-  document.getElementById('statsMask').classList.remove('on');
-  pctx = null;
-}
-
-function resetPop() {
-  if (!pctx) return;
-  var pf = P.find(function(p){return p.k===pctx.plat;});
-  if (!pf) return;
-  pf.s.forEach(function(s) {
-    var el = document.getElementById('sp_' + s);
-    if (el) el.value = 0;
-  });
 }
 
 /* ===== Filter ===== */
@@ -480,10 +353,7 @@ function saveMdl() {
     if (d) { d.title = title; d.content = content; }
   } else {
     var pl = {};
-    P.forEach(function(p){
-      var st = {}; p.s.forEach(function(s){st[s]=0;});
-      pl[p.k] = {published:false, boosted:false, stats:st};
-    });
+    P.forEach(function(pk){ pl[pk] = {published:false}; });
     D.unshift({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
       title: title, content: content,
@@ -530,7 +400,7 @@ function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g
 
 /* ===== Keyboard ===== */
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closePop(); closeMdl(); }
+  if (e.key === 'Escape') { closeMdl(); }
 });
 
 /* ===== Drag & Drop ===== */
