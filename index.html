@@ -174,16 +174,44 @@ tr:hover .del { visibility: visible; }
   .header { padding: 10px 12px; }
   .header h1 { font-size: 15px; }
   .header h1 small { display: none; }
-  .flt { padding: 6px 12px; gap: 5px; }
-  .flt-tag { font-size: 10px; padding: 2px 8px; }
-  .wrap { padding: 0 8px 20px; }
-  thead th { font-size: 10px; padding: 8px 4px; }
-  tbody td { padding: 8px 4px; }
-  .pdot { width: 20px; height: 20px; font-size: 10px; }
-  .btag { font-size: 10px; padding: 1px 4px; }
-  .sbtn { font-size: 11px; padding: 2px 4px; }
-  .pop { width: 300px; padding: 16px; }
-  .mdl-in { width: 90vw; padding: 18px; }
+  .flt { padding: 6px 12px; gap: 4px; }
+  .flt-tag { font-size: 10px; padding: 3px 8px; }
+  .flt .cnt { font-size: 11px; }
+  .wrap { padding: 0; }
+  .btn { font-size: 11px; padding: 5px 10px; min-height: 36px; }
+  .btn.sm { padding: 4px 8px; }
+
+  /* Table scroll + sticky title */
+  table { min-width: 700px; table-layout: fixed; }
+  .wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  thead th:first-child { position: sticky; left: 0; z-index: 3; background: #0d0d0d; }
+  tbody td:first-child { position: sticky; left: 0; z-index: 1; background: #0d0d0d; }
+  tbody tr:hover td:first-child { background: #141414; }
+  .c0 { width: 140px; min-width: 140px; }
+  .c1 { width: 36px; min-width: 36px; }
+  .cp { width: 76px; min-width: 76px; }
+  .cx { width: 30px; min-width: 30px; }
+
+  thead th { font-size: 10px; padding: 10px 4px; }
+  tbody td { padding: 10px 4px; }
+  .tit .nm { font-size: 12px; }
+  .tit .dt { font-size: 10px; }
+
+  /* Bigger touch targets */
+  .cp-tog { font-size: 20px; padding: 8px 6px 8px 2px; }
+  .pdot { width: 28px; height: 28px; font-size: 12px; border-width: 2px; }
+  .btag { font-size: 10px; padding: 4px 6px; min-height: 28px; display: inline-flex; align-items: center; }
+  .sbtn { font-size: 13px; padding: 4px 6px; min-height: 28px; display: inline-flex; align-items: center; }
+  .del { visibility: visible; font-size: 16px; padding: 6px; }
+
+  /* Popup full-screen on mobile */
+  .pop { width: 94vw; max-width: 94vw; padding: 18px 16px; }
+  .srow { padding: 10px 0; }
+  .srow input { width: 110px; padding: 8px; font-size: 15px; min-height: 36px; }
+
+  /* Modal adjustments */
+  .mdl-in { width: 94vw; padding: 18px; }
+  .fg input, .fg textarea { font-size: 15px; padding: 10px; }
 }
 </style>
 </head>
